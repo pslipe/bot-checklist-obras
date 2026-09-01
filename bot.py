@@ -43,10 +43,10 @@ async def exibir_pendencia(update, contexto):
     else:
         emoji_prioridade = "⚪"
     await mensagem.reply_text(f"🏗️ Confira a pendência! \n\n"
-        f"📝 Descrição: {contexto.user_data["descricao"]}\n"
-        f"📍 Local: {contexto.user_data["local"]}\n"
-        f"{emoji_prioridade} Prioridade: {contexto.user_data["prioridade"]}\n"
-        f"📅 Prazo: {contexto.user_data["prazo"]}")
+        f"📝 Descrição: {contexto.user_data['descricao']}\n"
+        f"📍 Local: {contexto.user_data['local']}\n"
+        f"{emoji_prioridade} Prioridade: {contexto.user_data['prioridade']}\n"
+        f"📅 Prazo: {contexto.user_data['prazo']}")
 
 async def start(update, contexto):
     if contexto.args:
@@ -195,18 +195,18 @@ async def confirmar_cadastro(update, contexto):
                 chat_id=contexto.user_data["grupo_id"],
                 photo=foto_file_id,
                 caption=f"🏗️ Nova Pendência!! #{id_pendencia}\n\n"
-                f"📝 Descrição: {contexto.user_data["descricao"]}\n"
-                f"📍 Local: {contexto.user_data["local"]}\n"
-                f"{emoji_prioridade} Prioridade: {contexto.user_data["prioridade"]}\n"
-                f"📅 Prazo: {contexto.user_data["prazo"]}\n")
+                f"📝 Descrição: {contexto.user_data['descricao']}\n"
+                f"📍 Local: {contexto.user_data['local']}\n"
+                f"{emoji_prioridade} Prioridade: {contexto.user_data['prioridade']}\n"
+                f"📅 Prazo: {contexto.user_data['prazo']}\n")
             else:
                 await contexto.bot.send_message(
                 chat_id = contexto.user_data["grupo_id"],
                 text = f"🏗️ Nova Pendência!! #{id_pendencia}\n\n"
-                f"📝 Descrição: {contexto.user_data["descricao"]}\n"
-                f"📍 Local: {contexto.user_data["local"]}\n"
-                f"{emoji_prioridade} Prioridade: {contexto.user_data["prioridade"]}\n"
-                f"📅 Prazo: {contexto.user_data["prazo"]}\n"
+                f"📝 Descrição: {contexto.user_data['descricao']}\n"
+                f"📍 Local: {contexto.user_data['local']}\n"
+                f"{emoji_prioridade} Prioridade: {contexto.user_data['prioridade']}\n"
+                f"📅 Prazo: {contexto.user_data['prazo']}\n"
                 )
         except TimedOut:
             await query.message.reply_text("⚠️ A pendência foi salva, mas houve timeout ao publicar no grupo. "
