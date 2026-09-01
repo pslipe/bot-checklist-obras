@@ -2,7 +2,7 @@ app = 'bot-checklist-obras'
 primary_region = 'gru'
 
 [build]
-  builder = 'paketobuildpacks/builder:base'
+  dockerfile = "Dockerfile"
 
 [processes]
   app = 'python bot.py'

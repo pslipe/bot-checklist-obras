@@ -1,2 +1,12 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+
+.git/
+.github/
+
+checklist.db
+checklist_backup_pre_producao.db
+
 fly.toml
-.venv
