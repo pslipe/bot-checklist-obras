@@ -1,9 +1,9 @@
+import os
 import sqlite3
 
 def conectar():
-    conexao = sqlite3.connect("checklist.db")
-
-    return conexao
+    caminho_banco = os.getenv("DATABASE_PATH", "checklist.db")
+    return sqlite3.connect(caminho_banco)
 
 def criar_tabela():
     conexao = conectar()
