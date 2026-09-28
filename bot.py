@@ -520,14 +520,6 @@ app.add_handler(
 app.add_handler(
     CommandHandler("concluir", concluir_pendencia)
 )
-app.add_handler(
-    CommandHandler("teste_alerta", testar_alerta)
-)
-
-app.add_handler(
-    CommandHandler("teste_resumo", testar_resumo)
-)
-
 # app.add_handler(
 #     CommandHandler("idgrupo", mostrar_id)
 # )
