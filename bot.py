@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from telegram.ext import Application, CommandHandler, ConversationHandler, MessageHandler, filters, CallbackQueryHandler
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from database import buscar_pendencias, criar_pendencia, atualizar_pendencia_concluida
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 from zoneinfo import ZoneInfo
 from telegram.error import TimedOut, NetworkError
 
@@ -220,6 +220,162 @@ async def confirmar_cadastro(update, contexto):
     return ConversationHandler.END
 
 
+async def alerta_pendencias_vencidas(contexto):
+
+    pendencias = buscar_pendencias(GRUPO_AUTORIZADO_ID)
+
+    hoje = datetime.now(
+        ZoneInfo("America/Sao_Paulo")
+    ).date()
+
+    pendencias_vencidas = []
+
+    for pendencia in pendencias:
+
+        prazo = datetime.strptime(
+            pendencia[5],
+            "%d/%m/%Y"
+        ).date()
+
+        if prazo < hoje:
+            pendencias_vencidas.append(pendencia)
+
+    # Se não houver pendências atrasadas, não envia mensagem
+    if not pendencias_vencidas:
+        return
+
+    # Mais antigas primeiro
+    pendencias_vencidas.sort(
+        key=lambda pendencia: datetime.strptime(
+            pendencia[5],
+            "%d/%m/%Y"
+        )
+    )
+
+    texto = (
+        "🚨 PENDÊNCIAS ATRASADAS\n\n"
+        f"📌 Total de pendências vencidas: {len(pendencias_vencidas)}\n\n"
+    )
+
+    for pendencia in pendencias_vencidas:
+
+        prazo = datetime.strptime(
+            pendencia[5],
+            "%d/%m/%Y"
+        ).date()
+
+        dias_atraso = (hoje - prazo).days
+
+        texto += (
+            f"🔴 #{pendencia[0]} - {pendencia[1]}\n"
+            f"📍 {pendencia[3]}\n"
+            f"📅 Prazo: {pendencia[5]}\n"
+            f"⏱️ {dias_atraso} dia(s) em atraso\n\n"
+        )
+
+    texto += (
+        "⚠️ Favor verificar a execução ou concluir a pendência "
+        "caso o serviço já tenha sido realizado."
+    )
+
+    await contexto.bot.send_message(
+        chat_id=GRUPO_AUTORIZADO_ID,
+        text=texto
+    )
+
+
+async def resumo_semanal_pendencias(contexto):
+
+    pendencias = buscar_pendencias(GRUPO_AUTORIZADO_ID)
+
+    if not pendencias:
+        await contexto.bot.send_message(
+            chat_id=GRUPO_AUTORIZADO_ID,
+            text=(
+                "📋 RESUMO SEMANAL DE PENDÊNCIAS\n\n"
+                "✅ Não existem pendências abertas."
+            )
+        )
+        return
+
+    hoje = datetime.now(
+        ZoneInfo("America/Sao_Paulo")
+    ).date()
+
+    pendencias_vencidas = []
+    pendencias_no_prazo = []
+
+    for pendencia in pendencias:
+
+        prazo = datetime.strptime(
+            pendencia[5],
+            "%d/%m/%Y"
+        ).date()
+
+        if prazo < hoje:
+            pendencias_vencidas.append(pendencia)
+        else:
+            pendencias_no_prazo.append(pendencia)
+
+    # Atrasadas mais antigas primeiro
+    pendencias_vencidas.sort(
+        key=lambda pendencia: datetime.strptime(
+            pendencia[5],
+            "%d/%m/%Y"
+        )
+    )
+
+    # Pendências dentro do prazo: mais próximas primeiro
+    pendencias_no_prazo.sort(
+        key=lambda pendencia: datetime.strptime(
+            pendencia[5],
+            "%d/%m/%Y"
+        )
+    )
+
+    texto = (
+        "📋 RESUMO SEMANAL DE PENDÊNCIAS\n\n"
+        f"📌 Total de pendências abertas: {len(pendencias)}\n"
+        f"🚨 Vencidas: {len(pendencias_vencidas)}\n"
+        f"⏳ Dentro do prazo: {len(pendencias_no_prazo)}\n\n"
+    )
+
+    if pendencias_vencidas:
+
+        texto += "🚨 PENDÊNCIAS ATRASADAS\n\n"
+
+        for pendencia in pendencias_vencidas:
+
+            prazo = datetime.strptime(
+                pendencia[5],
+                "%d/%m/%Y"
+            ).date()
+
+            dias_atraso = (hoje - prazo).days
+
+            texto += (
+                f"🔴 #{pendencia[0]} - {pendencia[1]}\n"
+                f"📍 {pendencia[3]}\n"
+                f"📅 Prazo: {pendencia[5]}\n"
+                f"⏱️ {dias_atraso} dia(s) em atraso\n\n"
+            )
+
+    if pendencias_no_prazo:
+
+        texto += "⏳ PENDÊNCIAS DENTRO DO PRAZO\n\n"
+
+        for pendencia in pendencias_no_prazo:
+
+            texto += (
+                f"🟡 #{pendencia[0]} - {pendencia[1]}\n"
+                f"📍 {pendencia[3]}\n"
+                f"📅 Prazo: {pendencia[5]}\n\n"
+            )
+
+    await contexto.bot.send_message(
+        chat_id=GRUPO_AUTORIZADO_ID,
+        text=texto
+    )
 
 
 async def listar_pendencias(update,contexto):
@@ -292,6 +448,20 @@ async def cancelar_pendencia (update, contexto):
     contexto.user_data.clear()
     return ConversationHandler.END
 
+# async def mostrar_id(update, contexto):
+#     await update.message.reply_text(
+#         f"ID deste grupo: {update.effective_chat.id}"
+#     )
+
+# async def apagar_mensagem(update, contexto):
+#     mensagem_respondida = update.message.reply_to_message
+
+#     if mensagem_respondida:
+#         await contexto.bot.delete_message(
+#             chat_id=update.effective_chat.id,
+#             message_id=mensagem_respondida.message_id
+#         )
+
 
 
 
@@ -350,7 +520,49 @@ app.add_handler(
 app.add_handler(
     CommandHandler("concluir", concluir_pendencia)
 )
+app.add_handler(
+    CommandHandler("teste_alerta", testar_alerta)
+)
 
+app.add_handler(
+    CommandHandler("teste_resumo", testar_resumo)
+)
+
+# app.add_handler(
+#     CommandHandler("idgrupo", mostrar_id)
+# )
+
+# app.add_handler(CommandHandler("apagar", apagar_mensagem))
+
+
+# =========================
+# AGENDAMENTOS AUTOMÁTICOS
+# =========================
+
+fuso_horario = ZoneInfo("America/Sao_Paulo")
+
+# Alerta diário de pendências vencidas - todos os dias às 07:00
+app.job_queue.run_daily(
+    alerta_pendencias_vencidas,
+    time=time(
+        hour=7,
+        minute=0,
+        tzinfo=fuso_horario
+    ),
+    name="alerta_diario_pendencias_vencidas"
+)
+
+# Resumo semanal - toda segunda-feira às 07:05
+app.job_queue.run_daily(
+    resumo_semanal_pendencias,
+    time=time(
+        hour=7,
+        minute=5,
+        tzinfo=fuso_horario
+    ),
+    days=(1,),
+    name="resumo_semanal_pendencias"
+)
 
 app.run_polling()
 
